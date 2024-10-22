@@ -1,7 +1,7 @@
-# app.py
 from flask import Flask, request, jsonify
-import pandas as pd
 from flask_cors import CORS
+import pandas as pd
+import numpy as np
 
 app = Flask(__name__)
 CORS(app)
@@ -10,33 +10,47 @@ CORS(app)
 def upload_file():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
+
     file = request.files['file']
+    
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
-    if file.filename.endswith('.csv'):
-        df = pd.read_csv(file)
-    elif file.filename.endswith(('.xls', '.xlsx')):
-        df = pd.read_excel(file)
-    else:
-        return jsonify({'error': 'File format not supported'}), 400
+    try:
+        if file.filename.endswith('.csv'):
+            df = pd.read_csv(file)
+        elif file.filename.endswith(('.xls', '.xlsx')):
+            df = pd.read_excel(file)
+        else:
+            return jsonify({'error': 'Unsupported file format'}), 400
+        
+        # Summary statistics
+        summary_stats = {}
+        for column in df.select_dtypes(include=['float64', 'int64']).columns:
+            summary_stats[column] = {
+                'sum': float(df[column].sum()),     # Convert to Python float
+                'mean': float(df[column].mean()),   # Convert to Python float
+                'median': float(df[column].median())  # Convert to Python float
+            }
 
-    # Calculate summary statistics
-    summary_stats = {}
-    for column in df.select_dtypes(include=['number']).columns:
-        summary_stats[column] = {
-            'sum': int(df[column].sum()),  # Convert to int
-            'mean': float(df[column].mean()),  # Convert to float
-            'median': float(df[column].median()),  # Convert to float
+        # Data types and null counts
+        data_info = {
+            'data_types': df.dtypes.astype(str).to_dict(),
+            'null_counts': df.isnull().sum().astype(int).to_dict()  # Ensure these are Python ints
         }
 
-    # Create a data type and null count summary
-    data_info = {
-        'data_types': df.dtypes.astype(str).to_dict(),  # Get data types as strings
-        'null_counts': df.isnull().sum().to_dict()  # Get null counts
-    }
+        # File path and column names to return to the front-end for PySpark code generation
+        response = {
+            'data_summary': summary_stats,
+            'data_info': data_info,
+            'columns': df.columns.tolist(),  # List of columns in the dataset
+            'file_name': file.filename        # File name for PySpark code
+        }
 
-    return jsonify({'data_summary': summary_stats, 'data_info': data_info, 'data': df.to_dict(orient='records')}), 200
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

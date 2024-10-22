@@ -1,7 +1,133 @@
-// import React, { useState } from 'react';
-// import * as XLSX from 'xlsx';
-// import Papa from 'papaparse';
 import './Fileupload.css'; // Import your CSS file
+import React, { useState } from 'react';
+import axios from 'axios';
+
+function App() {
+    const [file, setFile] = useState(null);
+    const [data, setData] = useState(null);
+    const [error, setError] = useState(null);
+    const [showCode, setShowCode] = useState(false);
+    const [showSummaryCode, setShowSummaryCode] = useState(false);
+
+    const handleFileChange = (event) => {
+        setFile(event.target.files[0]);
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await axios.post('http://127.0.0.1:5000/api/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            setData(response.data);
+            setError(null);
+            setShowCode(false); // Reset view
+            setShowSummaryCode(false); // Reset view
+        } catch (err) {
+            setError(err.response?.data?.error || 'Error uploading file');
+            setData(null);
+        }
+    };
+
+    const renderPySparkDataCode = () => {
+        if (data) {
+            const filePath = `path_to_file/${data.file_name}`;
+            const fileType = data.file_name.endsWith('.csv') ? 'csv' : 'excel';
+
+            return (
+                <pre>
+{`# PySpark code to load data and show first 10 rows
+from pyspark.sql import SparkSession
+
+# Create Spark session
+spark = SparkSession.builder.appName("Data Analysis").getOrCreate()
+
+# Load data from uploaded file
+df = spark.read.format("${fileType}").option("header", "true").load("${filePath}")
+
+# Show first 10 rows
+df.show(10)
+`}
+                </pre>
+            );
+        }
+        return null;
+    };
+
+    const renderPySparkSummaryCode = () => {
+        if (data) {
+            const columns = data.columns.filter(column => 
+                ['int64', 'float64'].includes(data.data_info.data_types[column])
+            );
+
+            const summaryCode = columns.map(column => `
+    sum("${column}").alias("sum_${column}"),
+    avg("${column}").alias("mean_${column}"),
+    expr('percentile_approx(${column}, 0.5)').alias("median_${column}")
+            `).join(',\n');
+
+            return (
+                <pre>
+        {`# PySpark code to calculate summary statistics
+        from pyspark.sql.functions import sum, avg, expr
+        # Summary statistics for numerical columns
+        summary_df = df.select(
+        ${summaryCode}
+        )
+        # Show summary statistics
+        summary_df.show()
+        `}
+                </pre>
+            );
+        }
+        return null;
+    };
+
+    return (
+        <div className="container">
+            <h1>Upload CSV or XLS File</h1>
+            <form onSubmit={handleSubmit}>
+                <input type="file" accept=".csv, .xls, .xlsx" onChange={handleFileChange} />
+                <button type="submit">Upload</button>
+            </form>
+            {error && <p className="error">{error}</p>}
+
+            {data && (
+                <div>
+                    <div className="button-group">
+                        <button onClick={() => setShowCode(!showCode)}>
+                            {showCode ? 'Hide Data PySpark Code' : 'Show Data PySpark Code'}
+                        </button>
+                        <button onClick={() => setShowSummaryCode(!showSummaryCode)}>
+                            {showSummaryCode ? 'Hide Summary PySpark Code' : 'Show Summary PySpark Code'}
+                        </button>
+                    </div>
+
+                    {showCode && (
+                        <div>
+                            <h2>PySpark Code to Load and Show Data</h2>
+                            {renderPySparkDataCode()}
+                        </div>
+                    )}
+
+                    {showSummaryCode && (
+                        <div>
+                            <h2>PySpark Code for Summary Statistics</h2>
+                            {renderPySparkSummaryCode()}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default App;
 
 // function FileUpload() {
 //   const [data, setData] = useState([]);
@@ -126,133 +252,133 @@ import './Fileupload.css'; // Import your CSS file
 // src/App.js
 // src/App.js
 // src/App.js
-import React, { useState } from 'react';
-import axios from 'axios';
+// import React, { useState } from 'react';
+// import axios from 'axios';
 
-function App() {
-    const [file, setFile] = useState(null);
-    const [data, setData] = useState(null);
-    const [error, setError] = useState(null);
-    const [showData, setShowData] = useState(false);
-    const [showSummary, setShowSummary] = useState(false);
+// function App() {
+//     const [file, setFile] = useState(null);
+//     const [data, setData] = useState(null);
+//     const [error, setError] = useState(null);
+//     const [showData, setShowData] = useState(false);
+//     const [showSummary, setShowSummary] = useState(false);
 
-    const handleFileChange = (event) => {
-        setFile(event.target.files[0]);
-    };
+//     const handleFileChange = (event) => {
+//         setFile(event.target.files[0]);
+//     };
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        const formData = new FormData();
-        formData.append('file', file);
+//     const handleSubmit = async (event) => {
+//         event.preventDefault();
+//         const formData = new FormData();
+//         formData.append('file', file);
 
-        try {
-            const response = await axios.post('http://127.0.0.1:5000/api/upload', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-            setData(response.data);
-            setError(null);
-            setShowData(false); // Reset view
-            setShowSummary(false); // Reset view
-        } catch (err) {
-            setError(err.response?.data?.error || 'Error uploading file');
-            setData(null);
-        }
-    };
+//         try {
+//             const response = await axios.post('http://127.0.0.1:5000/api/upload', formData, {
+//                 headers: {
+//                     'Content-Type': 'multipart/form-data',
+//                 },
+//             });
+//             setData(response.data);
+//             setError(null);
+//             setShowData(false); // Reset view
+//             setShowSummary(false); // Reset view
+//         } catch (err) {
+//             setError(err.response?.data?.error || 'Error uploading file');
+//             setData(null);
+//         }
+//     };
 
-    return (
-        <div className="container">
-            <h1>Upload CSV or XLS File</h1>
-            <form onSubmit={handleSubmit}>
-                <input type="file" accept=".csv, .xls, .xlsx" onChange={handleFileChange} />
-                <button type="submit">Upload</button>
-            </form>
-            {error && <p className="error">{error}</p>}
+//     return (
+//         <div className="container">
+//             <h1>Upload CSV or XLS File</h1>
+//             <form onSubmit={handleSubmit}>
+//                 <input type="file" accept=".csv, .xls, .xlsx" onChange={handleFileChange} />
+//                 <button type="submit">Upload</button>
+//             </form>
+//             {error && <p className="error">{error}</p>}
 
-            {data && (
-                <div>
-                    <div className="button-group">
-                        <button onClick={() => setShowData(!showData)}>
-                            {showData ? 'Hide Data' : 'Show Data'}
-                        </button>
-                        <button onClick={() => setShowSummary(!showSummary)}>
-                            {showSummary ? 'Hide Summary' : 'Show Summary'}
-                        </button>
-                    </div>
+//             {data && (
+//                 <div>
+//                     <div className="button-group">
+//                         <button onClick={() => setShowData(!showData)}>
+//                             {showData ? 'Hide Data' : 'Show Data'}
+//                         </button>
+//                         <button onClick={() => setShowSummary(!showSummary)}>
+//                             {showSummary ? 'Hide Summary' : 'Show Summary'}
+//                         </button>
+//                     </div>
 
-                    {showSummary && (
-                        <div>
-                            <h2>Data Summary</h2>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Column</th>
-                                        <th>Sum</th>
-                                        <th>Mean</th>
-                                        <th>Median</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {Object.entries(data.data_summary).map(([column, stats]) => (
-                                        <tr key={column}>
-                                            <td>{column}</td>
-                                            <td>{stats.sum}</td>
-                                            <td>{stats.mean}</td>
-                                            <td>{stats.median}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            <h2>Data Types and Null Counts</h2>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Column</th>
-                                        <th>Data Type</th>
-                                        <th>Null Count</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {Object.entries(data.data_info.data_types).map(([column, dtype]) => (
-                                        <tr key={column}>
-                                            <td>{column}</td>
-                                            <td>{dtype}</td>
-                                            <td>{data.data_info.null_counts[column]}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+//                     {showSummary && (
+//                         <div>
+//                             <h2>Data Summary</h2>
+//                             <table>
+//                                 <thead>
+//                                     <tr>
+//                                         <th>Column</th>
+//                                         <th>Sum</th>
+//                                         <th>Mean</th>
+//                                         <th>Median</th>
+//                                     </tr>
+//                                 </thead>
+//                                 <tbody>
+//                                     {Object.entries(data.data_summary).map(([column, stats]) => (
+//                                         <tr key={column}>
+//                                             <td>{column}</td>
+//                                             <td>{stats.sum}</td>
+//                                             <td>{stats.mean}</td>
+//                                             <td>{stats.median}</td>
+//                                         </tr>
+//                                     ))}
+//                                 </tbody>
+//                             </table>
+//                             <h2>Data Types and Null Counts</h2>
+//                             <table>
+//                                 <thead>
+//                                     <tr>
+//                                         <th>Column</th>
+//                                         <th>Data Type</th>
+//                                         <th>Null Count</th>
+//                                     </tr>
+//                                 </thead>
+//                                 <tbody>
+//                                     {Object.entries(data.data_info.data_types).map(([column, dtype]) => (
+//                                         <tr key={column}>
+//                                             <td>{column}</td>
+//                                             <td>{dtype}</td>
+//                                             <td>{data.data_info.null_counts[column]}</td>
+//                                         </tr>
+//                                     ))}
+//                                 </tbody>
+//                             </table>
+//                         </div>
+//                     )}
 
-                    {showData && (
-                        <div>
-                            <h2>First 10 Rows of Data</h2>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        {data.data.length > 0 && Object.keys(data.data[0]).map((key) => (
-                                            <th key={key}>{key}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {data.data.slice(0, 10).map((row, index) => (
-                                        <tr key={index}>
-                                            {Object.values(row).map((value, i) => (
-                                                <td key={i}>{value}</td>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-}
+//                     {showData && (
+//                         <div>
+//                             <h2>First 10 Rows of Data</h2>
+//                             <table>
+//                                 <thead>
+//                                     <tr>
+//                                         {data.data.length > 0 && Object.keys(data.data[0]).map((key) => (
+//                                             <th key={key}>{key}</th>
+//                                         ))}
+//                                     </tr>
+//                                 </thead>
+//                                 <tbody>
+//                                     {data.data.slice(0, 10).map((row, index) => (
+//                                         <tr key={index}>
+//                                             {Object.values(row).map((value, i) => (
+//                                                 <td key={i}>{value}</td>
+//                                             ))}
+//                                         </tr>
+//                                     ))}
+//                                 </tbody>
+//                             </table>
+//                         </div>
+//                     )}
+//                 </div>
+//             )}
+//         </div>
+//     );
+// }
 
-export default App;
+// export default App;
