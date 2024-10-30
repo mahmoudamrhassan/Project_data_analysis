@@ -2,67 +2,50 @@ import React from 'react';
 
 function Sidebar({ setCodeExample }) {
   const codeExamples = {
-    // Spark Basics
-    architecture: `from pyspark.sql import SparkSession\n\n# Create a Spark session\nspark = SparkSession.builder.appName("SparkArchitecture").getOrCreate()\nprint(spark)`,
-    rddBasics: `from pyspark import SparkContext\n\n# Initialize a SparkContext\nsc = SparkContext("local", "RDD Example")\ndata = [1, 2, 3, 4, 5]\nrdd = sc.parallelize(data)\nprint(rdd.collect())`,
-    dataFrames: `from pyspark.sql import SparkSession\n\n# Create a Spark session\nspark = SparkSession.builder.appName("DataFrame Example").getOrCreate()\ndata = [('Alice', 1), ('Bob', 2)]\ndf = spark.createDataFrame(data, ['name', 'id'])\ndf.show()`,
+    // Load Data
+    readCSV: `from pyspark.sql import SparkSession\n\n# قراءة بيانات CSV\nspark = SparkSession.builder.appName("Read CSV").getOrCreate()\ndf = spark.read.csv("path/to/file.csv", header=True, inferSchema=True)\ndf.show()`,
+    readSQL: `from pyspark.sql import SparkSession\n\n# قراءة بيانات من قاعدة بيانات SQL\nspark = SparkSession.builder.appName("Read SQL").getOrCreate()\ndf = spark.read.format("jdbc") \n.option("url", "jdbc:postgresql://hostname:port/dbname")\n.option("dbtable", "table_name")\n.option("user", "username")\n.option("password", "password")\n.load()\ndf.show()`,
+    readOracle: `from pyspark.sql import SparkSession\n\n# قراءة بيانات من Oracle\nspark = SparkSession.builder.appName("Read Oracle").getOrCreate()\ndf = spark.read.format("jdbc") \n.option("url", "jdbc:oracle:thin:@//hostname:port/service_name")\n.option("dbtable", "table_name")\n.option("user", "username")\n.option("password", "password")\n.load()\ndf.show()`,
+    readMongoDB: `from pyspark.sql import SparkSession\n\n# قراءة بيانات من MongoDB\nspark = SparkSession.builder.appName("Read MongoDB").getOrCreate()\ndf = spark.read.format("mongo")\n.option("uri", "mongodb://username:password@hostname:port/dbname.collection")\n.load()\ndf.show()`,
+    writeCSV: `# كتابة البيانات إلى CSV\ndf.write.csv("path/to/output.csv")`,
     
-    // Data Ingestion
-    readCSV: `from pyspark.sql import SparkSession\n\n# Reading CSV data\nspark = SparkSession.builder.appName("Read CSV").getOrCreate()\ndf = spark.read.csv("path/to/file.csv", header=True, inferSchema=True)\ndf.show()`,
-    writeCSV: `# Writing Data to CSV\ndf.write.csv("path/to/output.csv")`,
+    // Explore Data Analysis
+    basicStatistics: `from pyspark.sql import SparkSession\nfrom pyspark.sql.functions import avg, max, min\n\n# إحصائيات أساسية\nspark = SparkSession.builder.appName("Basic Statistics").getOrCreate()\ndf = spark.read.csv("path/to/file.csv", header=True, inferSchema=True)\ndf.select(avg("column_name"), max("column_name"), min("column_name")).show()`,
+    groupBy: `from pyspark.sql import SparkSession\n\n# التجميع حسب عمود\nspark = SparkSession.builder.appName("Group By Example").getOrCreate()\ndf = spark.read.csv("path/to/file.csv", header=True, inferSchema=True)\ndf.groupBy("column_name").count().show()`,
+    correlation: `from pyspark.sql import SparkSession\n\n# حساب الارتباط\nspark = SparkSession.builder.appName("Correlation Example").getOrCreate()\ndf = spark.read.csv("path/to/file.csv", header=True, inferSchema=True)\ncorrelation = df.stat.corr("column1", "column2")\nprint("Correlation: ", correlation)`,
+    nullValues: `from pyspark.sql import SparkSession\n\n# عدد القيم الفارغة\nspark = SparkSession.builder.appName("Null Values Example").getOrCreate()\ndf = spark.read.csv("path/to/file.csv", header=True, inferSchema=True)\ndf.select([count(when(isnull(c), c)).alias(c) for c in df.columns]).show()`,
     
-    // Machine Learning with MLlib
-    dataPrep: `from pyspark.ml.feature import StandardScaler\nfrom pyspark.ml.linalg import Vectors\n\n# Sample data for scaling\nspark = SparkSession.builder.appName("MLlib Data Preparation").getOrCreate()\ndata = [(0, Vectors.dense([1.0, 0.1, -1.0]),), (1, Vectors.dense([2.0, 1.1, 1.0]),)]\ndf = spark.createDataFrame(data, ["id", "features"])\nscaler = StandardScaler(inputCol="features", outputCol="scaledFeatures")\nscalerModel = scaler.fit(df)\nscaledData = scalerModel.transform(df)\nscaledData.show()`,
-    modelTraining: `from pyspark.ml.classification import LogisticRegression\nfrom pyspark.ml.linalg import Vectors\n\n# Training a logistic regression model\nspark = SparkSession.builder.appName("Model Training").getOrCreate()\ndata = [(0.0, Vectors.dense([1.0, 0.1, -1.0])), (1.0, Vectors.dense([2.0, 1.1, 1.0]))]\ndf = spark.createDataFrame(data, ["label", "features"])\nlr = LogisticRegression(maxIter=10)\nmodel = lr.fit(df)\nprint("Coefficients: ", model.coefficients)`,
-    modelEvaluation: `from pyspark.ml.evaluation import MulticlassClassificationEvaluator\n\n# Evaluating model accuracy\npredictions = model.transform(df)\nevaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction", metricName="accuracy")\naccuracy = evaluator.evaluate(predictions)\nprint("Test Accuracy = ", accuracy)`,
+    // Transformation Data
+    dataPrep: `from pyspark.ml.feature import StandardScaler\nfrom pyspark.ml.linalg import Vectors\n\n# بيانات نموذجية للتقييس\nspark = SparkSession.builder.appName("MLlib Data Preparation").getOrCreate()\ndata = [(0, Vectors.dense([1.0, 0.1, -1.0]),), (1, Vectors.dense([2.0, 1.1, 1.0]),)]\ndf = spark.createDataFrame(data, ["id", "features"])\nscaler = StandardScaler(inputCol="features", outputCol="scaledFeatures")\nscalerModel = scaler.fit(df)\nscaledData = scalerModel.transform(df)\nscaledData.show()`,
     
-    // Graph Processing
-    graphX: `from pyspark.sql import SparkSession\nfrom graphframes import GraphFrame\n\n# Create a GraphFrame\nvertices = spark.createDataFrame([("1", "Alice"), ("2", "Bob")], ["id", "name"])\nedges = spark.createDataFrame([("1", "2", "friend")], ["src", "dst", "relationship"])\ng = GraphFrame(vertices, edges)\ng.vertices.show()`,
-    
-    // Streaming Data
-    structuredStreaming: `from pyspark.sql import SparkSession\n\n# Streaming example\nlines = spark.readStream.format("socket").option("host", "localhost").option("port", 9999).load()\nwords = lines.selectExpr("split(value, ' ') as words")\nquery = words.writeStream.outputMode("append").format("console").start()\nquery.awaitTermination()`,
-    
-    // Performance Tuning
-    optimization: `from pyspark.sql import SparkSession\n\n# Caching DataFrame and broadcasting variable\nspark = SparkSession.builder.appName("Optimization").getOrCreate()\ndf = spark.read.csv("path/to/file.csv")\ncachedDF = df.cache()\nbroadcastVar = spark.sparkContext.broadcast([1, 2, 3])\nprint(broadcastVar.value)`,
-    clusterConfig: `from pyspark.sql import SparkSession\n\n# Spark configuration example\nspark = SparkSession.builder.appName("Cluster Config").config("spark.executor.memory", "4g").getOrCreate()\nprint(spark.sparkContext.getConf().getAll())`,
-    
-    // Integration with Other Tools
-    ecosystemIntegration: `from pyspark.sql import SparkSession\n\n# Integration with Hadoop\nspark = SparkSession.builder.appName("Integration").config("spark.hadoop.fs.defaultFS", "hdfs://namenode:9000").getOrCreate()\ndf = spark.read.format("parquet").load("hdfs://namenode:9000/path/to/file")\ndf.show()`,
-    
-    // Best Practices
-    dataGovernance: `from pyspark.sql.functions import current_date\n\n# Adding data lineage with ingestion date\ndata = spark.read.csv("path/to/data.csv")\ndata = data.withColumn("ingestion_date", current_date())\ndata.show()`,
-    versionControl: `from pyspark.sql import SparkSession\n\n# Saving data with version control\nspark = SparkSession.builder.appName("Version Control").getOrCreate()\ndata.write.format("parquet").mode("overwrite").option("path", "path/to/output").option("version", "v1").save()`
+    // Visualization Data
+    visualizationExample: `import matplotlib.pyplot as plt\nimport pandas as pd\n\n# مثال على التصور باستخدام Pandas وMatplotlib\n# يجب تحويل DataFrame Spark إلى DataFrame Pandas أولاً\npdf = df.toPandas()\nplt.figure(figsize=(10,6))\nplt.bar(pdf['column_name'], pdf['another_column'])\nplt.title('Visualization Example')\nplt.show()`
   };
 
   const explanations = {
-    architecture: "This example initializes a Spark session, which is the entry point for using Spark functionality. It manages the Spark application's lifecycle and connects to the cluster resources.",
-    rddBasics: "This code demonstrates how to create an RDD (Resilient Distributed Dataset), the basic data structure in Spark, from a list of numbers and perform a basic operation.",
-    dataFrames: "A DataFrame is a distributed collection of data organized into named columns, similar to a database table. This example shows how to create a DataFrame and display its content.",
+    readCSV: "هذا الكود يوضح كيفية قراءة البيانات من ملف CSV إلى DataFrame في Spark، مع تمكين استنتاج العنوان والهيكل.",
+    readSQL: "هذا المثال يوضح كيفية قراءة البيانات من قاعدة بيانات SQL باستخدام JDBC.",
+    readOracle: "هذا الكود يوضح كيفية قراءة البيانات من قاعدة بيانات Oracle باستخدام JDBC.",
+    readMongoDB: "هذا المثال يوضح كيفية قراءة البيانات من MongoDB.",
+    writeCSV: "هذا المقتطف يوضح كيفية كتابة البيانات من DataFrame إلى ملف CSV.",
     
-    readCSV: "This code shows how to read data from a CSV file into a Spark DataFrame, with header inference and schema inference enabled.",
-    writeCSV: "This snippet demonstrates how to write data from a DataFrame to a CSV file.",
+    basicStatistics: "هذا الكود يوضح كيفية حساب إحصائيات أساسية مثل المتوسط والحد الأقصى والحد الأدنى لعمود معين في DataFrame.",
+    groupBy: "هذا المثال يوضح كيفية تجميع البيانات بناءً على عمود معين وعدّ عدد التكرارات لكل قيمة.",
+    correlation: "هذا الكود يحسب معامل الارتباط بين عمودين في DataFrame.",
+    nullValues: "هذا المثال يظهر كيفية حساب عدد القيم الفارغة في كل عمود من أعمدة DataFrame.",
     
-    dataPrep: "This code demonstrates data preparation techniques in Spark's MLlib, including feature scaling. Feature scaling is essential for machine learning algorithms to converge faster.",
-    modelTraining: "This example shows how to train a logistic regression model using MLlib's API. The model is trained on sample data to predict labels based on features.",
-    modelEvaluation: "This snippet evaluates the performance of a classification model using accuracy as the metric, providing insight into the model's effectiveness.",
+    dataPrep: "هذا الكود يوضح تقنيات إعداد البيانات في MLlib في Spark.",
     
-    graphX: "This code demonstrates the basics of GraphX in Spark, used for graph-parallel processing. A GraphFrame is created with vertices and edges representing a social network.",
-    
-    structuredStreaming: "This example shows how to use Spark Structured Streaming to read data from a socket source and process it in real time, outputting to the console.",
-    
-    optimization: "Caching data and using broadcast variables can optimize Spark performance. Caching stores DataFrames in memory, while broadcasting reduces data transfer costs.",
-    clusterConfig: "This code shows how to configure Spark settings, such as memory allocation, to improve cluster resource utilization.",
-    
-    ecosystemIntegration: "Spark can integrate with Hadoop and other systems. This example configures Spark to read data from HDFS, Hadoop’s distributed storage system.",
-    
-    dataGovernance: "This example adds data lineage information (e.g., ingestion date) to the data, which is essential for tracking data's origin and transformation history.",
-    versionControl: "This snippet demonstrates a method for saving DataFrames with versioning, enabling organized storage of dataset versions in Spark applications."
+    visualizationExample: "هذا المثال يوضح كيفية استخدام مكتبة Matplotlib لتصور بيانات DataFrame باستخدام Pandas."
   };
 
   return (
     <div style={{ width: '200px', backgroundColor: '#f1f1f1', padding: '20px' }}>
-      <h3>Spark Topics</h3>
-      {Object.keys(codeExamples).map((key) => (
+      {/* <h3>مواضيع Spark</h3> */}
+
+      {/* Load Data Section */}
+      <h4>تحميل البيانات</h4>
+      {Object.keys(codeExamples).filter(key => key.startsWith("read") || key === "writeCSV").map((key) => (
         <button 
           key={key}
           onClick={() => setCodeExample({ code: codeExamples[key], explanation: explanations[key] })}
@@ -71,6 +54,43 @@ function Sidebar({ setCodeExample }) {
           {key.replace(/([A-Z])/g, ' $1').trim()}
         </button>
       ))}
+
+      {/* Explore Data Analysis Section */}
+      <h4>استكشاف تحليل البيانات</h4>
+      {Object.keys(codeExamples).filter(key => key.startsWith("basic") || key.startsWith("group") || key === "correlation" || key === "nullValues").map((key) => (
+        <button 
+          key={key}
+          onClick={() => setCodeExample({ code: codeExamples[key], explanation: explanations[key] })}
+          style={buttonStyle}
+        >
+          {key.replace(/([A-Z])/g, ' $1').trim()}
+        </button>
+      ))}
+
+      {/* Transformation Data Section */}
+      <h4>تحويل البيانات</h4>
+      {Object.keys(codeExamples).filter(key => key === "dataPrep").map((key) => (
+        <button 
+          key={key}
+          onClick={() => setCodeExample({ code: codeExamples[key], explanation: explanations[key] })}
+          style={buttonStyle}
+        >
+          {key.replace(/([A-Z])/g, ' $1').trim()}
+        </button>
+      ))}
+
+      {/* Visualization Data Section */}
+      <h4>تصور البيانات</h4>
+      {Object.keys(codeExamples).filter(key => key === "visualizationExample").map((key) => (
+        <button 
+          key={key}
+          onClick={() => setCodeExample({ code: codeExamples[key], explanation: explanations[key] })}
+          style={buttonStyle}
+        >
+          {key.replace(/([A-Z])/g, ' $1').trim()}
+        </button>
+      ))}
+
     </div>
   );
 }
@@ -86,3 +106,50 @@ const buttonStyle = {
 };
 
 export default Sidebar;
+
+// import React from 'react';
+
+// function Sidebar({ setCodeExample }) {
+//   const codeExamples = {
+//     // Load Data
+//     loadCSV: `from pyspark.sql import SparkSession\n\n# قراءة بيانات CSV\nspark = SparkSession.builder.appName("Load CSV").getOrCreate()\ndf = spark.read.csv("path/to/file.csv", header=True, inferSchema=True)\ndf.show()  # عرض البيانات\nprint("أول 5 صفوف: ", df.head(5))  # عرض أول 5 صفوف`,
+//     loadSQL: `from pyspark.sql import SparkSession\n\n# قراءة بيانات من قاعدة بيانات SQL\nspark = SparkSession.builder.appName("Load SQL").getOrCreate()\ndf = spark.read.format("jdbc")\n.option("url", "jdbc:postgresql://hostname:port/dbname")\n.option("dbtable", "table_name")\n.option("user", "username")\n.option("password", "password")\n.load()\ndf.show()  # عرض البيانات\nprint("أول 5 صفوف: ", df.head(5))  # عرض أول 5 صفوف`,
+//     loadOracle: `from pyspark.sql import SparkSession\n\n# قراءة بيانات من Oracle\nspark = SparkSession.builder.appName("Load Oracle").getOrCreate()\ndf = spark.read.format("jdbc")\n.option("url", "jdbc:oracle:thin:@//hostname:port/service_name")\n.option("dbtable", "table_name")\n.option("user", "username")\n.option("password", "password")\n.load()\ndf.show()  # عرض البيانات\nprint("أول 5 صفوف: ", df.head(5))  # عرض أول 5 صفوف`,
+//     loadMongoDB: `from pyspark.sql import SparkSession\n\n# قراءة بيانات من MongoDB\nspark = SparkSession.builder.appName("Load MongoDB").getOrCreate()\ndf = spark.read.format("mongo")\n.option("uri", "mongodb://username:password@hostname:port/dbname.collection")\n.load()\ndf.show()  # عرض البيانات\nprint("أول 5 صفوف: ", df.head(5))  # عرض أول 5 صفوف`,
+//   };
+
+//   const explanations = {
+//     loadCSV: "هذا الكود يوضح كيفية قراءة بيانات من ملف CSV إلى DataFrame، وعرض البيانات مع إظهار أول 5 صفوف.",
+//     loadSQL: "هذا المثال يوضح كيفية قراءة البيانات من قاعدة بيانات SQL باستخدام JDBC وعرض أول 5 صفوف من البيانات.",
+//     loadOracle: "هذا الكود يوضح كيفية قراءة البيانات من قاعدة بيانات Oracle باستخدام JDBC مع عرض أول 5 صفوف.",
+//     loadMongoDB: "هذا المثال يوضح كيفية قراءة البيانات من MongoDB مع عرض أول 5 صفوف من البيانات.",
+//   };
+
+//   return (
+//     <div style={{ width: '250px', backgroundColor: '#f1f1f1', padding: '20px' }}>
+//       <h3>مواضيع Spark</h3>
+//       <h4>تحميل البيانات</h4>
+//       {Object.keys(codeExamples).map((key) => (
+//         <button 
+//           key={key}
+//           onClick={() => setCodeExample({ code: codeExamples[key], explanation: explanations[key] })}
+//           style={buttonStyle}
+//         >
+//           {key.replace(/([A-Z])/g, ' $1').trim()}  {/* Displays the key with spaces */}
+//         </button>
+//       ))}
+//     </div>
+//   );
+// }
+
+// const buttonStyle = {
+//   width: '100%',
+//   padding: '10px',
+//   margin: '10px 0',
+//   backgroundColor: '#333',
+//   color: 'white',
+//   border: 'none',
+//   cursor: 'pointer',
+// };
+
+// export default Sidebar;
