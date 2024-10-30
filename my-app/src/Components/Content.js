@@ -27,8 +27,8 @@ function Content({ codeExample }) {
           </div>
           <pre style={preStyle}>{codeExample.code}</pre>
           <h3>Explanation</h3>
-          <p>{codeExample.explanation}</p>
-        </>
+          <p className='text-end' dir='rtl'>{codeExample.explanation}</p>
+          </>
       ) : (
         <p>Select a code example from the sidebar to view it here.</p>
       )}
