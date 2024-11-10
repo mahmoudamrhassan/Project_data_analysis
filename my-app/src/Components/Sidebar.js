@@ -51,6 +51,42 @@ Writeastable:`
 df.write.option('path', 'hdfs://PROD-HDFS-NN-HA/warehouse/tablespace/external/hive/ENter_DataBase_Name.db/Enter_newtable_name')/
 .saveAsTable('dbname.table_name')
 `,
+// Join example
+join: `
+# Perform a join between two DataFrames
+df1 = spark.sql("SELECT * FROM dbname.table1")
+df2 = spark.sql("SELECT * FROM dbname.table2")
+
+# Inner join on a specific column
+joined_df = df1.join(df2, df1['common_column'] == df2['common_column'], 'inner')
+joined_df.show()
+`,
+
+// Union example
+union: `
+# Union two DataFrames
+df1 = spark.sql("SELECT * FROM dbname.table1")
+df2 = spark.sql("SELECT * FROM dbname.table2")
+
+# Ensure both DataFrames have the same schema before union
+union_df = df1.union(df2)
+union_df.show()
+`,
+povit:`
+# Import required functions
+from pyspark.sql.functions import col
+
+# Pivot the data
+pivoted_df = df.groupBy('group_column')
+          .pivot('pivot_column')
+               .agg({'value_column': 'sum'})  # You can change 'sum' to other aggregate functions like 'avg', 'max', etc.
+
+pivoted_df.show()`,
+
+OptimizingRead:`df.write.partitionBy('partition_column').format('parquet').saveAsTable('dbname.optimized_table')
+`,
+InteractingwithHDFS:`df.write.option('path', 'hdfs://path/to/hive/table').saveAsTable('dbname.new_table')
+`,
 
     // Load Data
     readCSV: `from pyspark.sql import SparkSession\n\n# قراءة بيانات CSV\nspark = SparkSession.builder.appName("Read CSV").getOrCreate()\ndf = spark.read.csv("path/to/file.csv", header=True, inferSchema=True)\ndf.show()`,
@@ -165,7 +201,7 @@ df.write.option('path', 'hdfs://PROD-HDFS-NN-HA/warehouse/tablespace/external/hi
     <div style={{ width: '250px', backgroundColor: '#f1f1f1', padding: '20px' }}>
       {/* <h3>مواضيع Spark</h3> */}
       <h4>  [Hive Ql ]رحلة تحليل بيانات </h4>
-      {Object.keys(codeExamples).filter(key => key.endsWith("hive") || key ===  "Fillnull" || key ===  "DropNull"|| key ===  "ChangeColumnType"|| key ===  "Addsequence" || key ===  "Renamecolumn" ||  key === "Writeastable" ).map((key) => (
+      {Object.keys(codeExamples).filter(key => key.endsWith("hive") || key ===  "Fillnull" || key ===  "DropNull"|| key ===  "ChangeColumnType"|| key ===  "" || key ===  "Renamecolumn" ||  key === "Writeastable" ||  key === "join"||  key === "union"  ||  key ==="povit" ||  key ==="AddingSequenceNumbers" ||  key ==="OptimizingRead " ||  key ==="InteractingwithHDFS" ).map((key) => (
         <button 
           key={key}
           onClick={() => setCodeExample({ code: codeExamples[key], explanation: explanations[key] })}
