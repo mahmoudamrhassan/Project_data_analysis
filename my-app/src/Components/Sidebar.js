@@ -53,12 +53,9 @@ df.write.option('path', 'hdfs://PROD-HDFS-NN-HA/warehouse/tablespace/external/hi
 `,
 
   join:   `
+  Exable Tow Table 
 # Perform a join between DataFrames
-${['table1', 'table2','table3'].map((table, index) => `df${index + 1} = spark.sql("SELECT * FROM dbname.${table}")`).join('\n')}
 
-// Inner join example
-joined_df = df1.join(df2, df1['common_column'] == df2['common_column'], 'join_type')
-joined_df.show()
 `,
 
   union: `
